@@ -216,7 +216,7 @@ DBPassword = <%= scope.lookupvar('zabbix_server::db_password') %>
 # Default:
 
 <% if $install_java_gateway == true -%>
-JavaGateway=<%= fqdn %>
+JavaGateway=<%= scope.lookupvar('::fqdn') %>
 <% else -%>
 # JavaGateway=
 <% end %>

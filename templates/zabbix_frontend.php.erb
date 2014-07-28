@@ -14,12 +14,9 @@ $DB['PASSWORD'] = '<%= scope.lookupvar('zabbix_server::db_password') -%>';
 // SCHEMA is relevant only for IBM_DB2 database
 $DB['SCHEMA'] = '';
 
-// By default the Zabbix server is intended to be 
-// on the same host of frontend. If not, please provide another template
-
-$ZBX_SERVER      = '<%= @fqdn -%>';
+$ZBX_SERVER      = '<%= scope.lookupvar('zabbix_server::backend_server') -%>';
 $ZBX_SERVER_PORT = '<%= scope.lookupvar('zabbix_server::port') -%>';
-$ZBX_SERVER_NAME = '<%= @fqdn -%>';
+$ZBX_SERVER_NAME = '<%= scope.lookupvar('zabbix_server::backend_server') -%>';
 
 $IMAGE_FORMAT_DEFAULT = IMAGE_FORMAT_PNG;
 ?>

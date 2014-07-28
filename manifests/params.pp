@@ -97,6 +97,7 @@ class zabbix_server::params {
   $db_database = ''
   $db_user     = ''
   $db_password = ''
+  $backend_server = $::fq
 
   # General Settings
   $my_class = ''

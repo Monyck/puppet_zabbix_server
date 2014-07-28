@@ -46,6 +46,10 @@
 # [*db_password*]
 #   Password of the DB user.
 #
+# [*backend_server*]
+#   When installing frontend separately, you can set backend to connect to.
+#   Default: fqdn
+#
 # [*managerepo*]
 #   Whether add Zabbix official repositories or not.
 #   Default: true
@@ -251,8 +255,7 @@ class zabbix_server (
   $install_java_gateway   = params_lookup( 'install_java_gateway'),
   $frontend_template      = params_lookup( 'frontend_template'),
   $managerepo             = params_lookup( 'managerepo' ),
-  $mysql_config_hash      = params_lookup( 'mysql_config_hash' ),
-  $postgresql_config_hash = params_lookup( 'postgresql_config_hash' ),
+  $backend_server         = params_lookup( 'backend_server' ),
   $db_server              = params_lookup( 'db_server' ),
   $db_type                = params_lookup( 'db_type' ),
   $db_database            = params_lookup( 'db_database' ),
