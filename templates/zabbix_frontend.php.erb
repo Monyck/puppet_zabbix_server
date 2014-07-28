@@ -17,9 +17,9 @@ $DB['SCHEMA'] = '';
 // By default the Zabbix server is intended to be 
 // on the same host of frontend. If not, please provide another template
 
-$ZBX_SERVER      = '<%= ::fqdn -%>';
+$ZBX_SERVER      = '<%= @fqdn -%>';
 $ZBX_SERVER_PORT = '<%= zabbix_server::port -%>';
-$ZBX_SERVER_NAME = '<%= ::fqdn -%>';
+$ZBX_SERVER_NAME = '<%= @fqdn -%>';
 
 $IMAGE_FORMAT_DEFAULT = IMAGE_FORMAT_PNG;
 ?>
