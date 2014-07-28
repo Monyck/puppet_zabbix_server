@@ -5,7 +5,7 @@ and also partially based on Chris Spence's Zabbix Puppet module (https://github.
 
 Made by Monica Colangelo / monica.colangelo@gmail.com
 
-Official git repository: http://github.com/monyck/puppet-zabbix_server
+Official git repository: https://github.com/Monyck/puppet_zabbix_server
 
 Released under the terms of Apache 2 License.
 
@@ -109,9 +109,3 @@ Official site: http://www.example42.com
           firewall_src  => '10.42.0.0/24',
           firewall_dst  => $ipaddress_eth0,
         }
-
-
-## CONTINUOUS TESTING
-
-Travis {<img src="https://travis-ci.org/example42/puppet-zabbix_server.png?branch=master" alt="Build Status" />}[https://travis-ci.org/example42/puppet-zabbix_server]
-
