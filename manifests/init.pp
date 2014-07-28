@@ -32,7 +32,7 @@
 #
 # [*db_type*]
 #   DB type to install if install_db is set to true. 
-#   This module currently supports only mysql and postgresql.
+#   This module currently supports only mysql.
 #
 # [*db_server*]
 #   Name of host with DB to connect to. It sets to 'localhost' if install_db is set to true.
@@ -313,66 +313,6 @@ class zabbix_server (
   $bool_audit_only=any2bool($audit_only)
   $bool_noops=any2bool($noops)
 
-  ### Definition of some variables used in the module
-  $manage_package = $zabbix_server::bool_absent ? {
-    true  => 'absent',
-    false => $zabbix_server::version,
-  }
-
-  $manage_service_enable = $zabbix_server::bool_disableboot ? {
-    true    => false,
-    default => $zabbix_server::bool_disable ? {
-      true    => false,
-      default => $zabbix_server::bool_absent ? {
-        true  => false,
-        false => true,
-      },
-    },
-  }
-
-  $manage_service_ensure = $zabbix_server::bool_disable ? {
-    true    => 'stopped',
-    default =>  $zabbix_server::bool_absent ? {
-      true    => 'stopped',
-      default => 'running',
-    },
-  }
-
-  $manage_service_autorestart = $zabbix_server::bool_service_autorestart ? {
-    true    => Service[zabbix_server],
-    false   => undef,
-  }
-
-  $manage_file = $zabbix_server::bool_absent ? {
-    true    => 'absent',
-    default => 'present',
-  }
-
-  if $zabbix_server::bool_absent == true
-  or $zabbix_server::bool_disable == true
-  or $zabbix_server::bool_disableboot == true {
-    $manage_monitor = false
-  } else {
-    $manage_monitor = true
-  }
-
-  if $zabbix_server::bool_absent == true
-  or $zabbix_server::bool_disable == true {
-    $manage_firewall = false
-  } else {
-    $manage_firewall = true
-  }
-
-  if $zabbix_server::managerepo == true {
-    include zabbix_server::repo
-  }
-  
-  if $zabbix_server::install_db == true {
-    case $zabbix_server::db_type {
-      'mysql': { include zabbix_server::mysql }
-      default: { fail("Currently this module only supports mysql db type") }
-    }
-  }
   
   if $zabbix_server::install_frontend == true {
     include zabbix_server::frontend
@@ -386,146 +326,206 @@ class zabbix_server (
     include zabbix_server::java_gateway
   }
 
-  $manage_audit = $zabbix_server::bool_audit_only ? {
-    true  => 'all',
-    false => undef,
-  }
+  if $zabbix_server::install_server == true {
 
-  $manage_file_replace = $zabbix_server::bool_audit_only ? {
-    true  => false,
-    false => true,
-  }
+    ### Definition of some variables used in the module
+    $manage_package = $zabbix_server::bool_absent ? {
+      true  => 'absent',
+      false => $zabbix_server::version,
+    }
 
-  $manage_file_source = $zabbix_server::source ? {
-    ''        => undef,
-    default   => $zabbix_server::source,
-  }
+    $manage_service_enable = $zabbix_server::bool_disableboot ? {
+      true    => false,
+      default => $zabbix_server::bool_disable ? {
+        true    => false,
+        default => $zabbix_server::bool_absent ? {
+          true  => false,
+          false => true,
+        },
+      },
+    }
 
-  $manage_file_content = $zabbix_server::template ? {
-    ''        => undef,
-    default   => template($zabbix_server::template),
-  }
+    $manage_service_ensure = $zabbix_server::bool_disable ? {
+      true    => 'stopped',
+      default =>  $zabbix_server::bool_absent ? {
+        true    => 'stopped',
+        default => 'running',
+      },
+    }
 
-  ### Managed resources
-  package { $zabbix_server::package:
-    ensure  => $zabbix_server::manage_package,
-    noop    => $zabbix_server::bool_noops,
-  }
+    $manage_service_autorestart = $zabbix_server::bool_service_autorestart ? {
+      true    => Service[zabbix_server],
+      false   => undef,
+    }
 
-  service { 'zabbix_server':
-    ensure     => $zabbix_server::manage_service_ensure,
-    name       => $zabbix_server::service,
-    enable     => $zabbix_server::manage_service_enable,
-    hasstatus  => $zabbix_server::service_status,
-    pattern    => $zabbix_server::process,
-    require    => Package[$zabbix_server::package],
-    noop       => $zabbix_server::bool_noops,
-  }
+    $manage_file = $zabbix_server::bool_absent ? {
+      true    => 'absent',
+      default => 'present',
+    }
 
-  file { 'zabbix_server.conf':
-    ensure  => $zabbix_server::manage_file,
-    path    => $zabbix_server::config_file,
-    mode    => $zabbix_server::config_file_mode,
-    owner   => $zabbix_server::config_file_owner,
-    group   => $zabbix_server::config_file_group,
-    require => Package[$zabbix_server::package],
-    notify  => $zabbix_server::manage_service_autorestart,
-    source  => $zabbix_server::manage_file_source,
-    content => $zabbix_server::manage_file_content,
-    replace => $zabbix_server::manage_file_replace,
-    audit   => $zabbix_server::manage_audit,
-    noop    => $zabbix_server::bool_noops,
-  }
+    if $zabbix_server::bool_absent == true
+    or $zabbix_server::bool_disable == true
+    or $zabbix_server::bool_disableboot == true {
+      $manage_monitor = false
+    } else {
+      $manage_monitor = true
+    }
 
-  # The whole zabbix_server configuration directory can be recursively overriden
-  if $zabbix_server::source_dir {
-    file { 'zabbix_server.dir':
-      ensure  => directory,
-      path    => $zabbix_server::config_dir,
+    if $zabbix_server::bool_absent == true
+    or $zabbix_server::bool_disable == true {
+      $manage_firewall = false
+    } else {
+      $manage_firewall = true
+    }
+
+    if $zabbix_server::managerepo == true {
+      include zabbix_server::repo
+    }
+  
+    if $zabbix_server::install_db == true {
+      case $zabbix_server::db_type {
+        'mysql': { include zabbix_server::mysql }
+        default: { fail("Currently this module only supports mysql db type") }
+      }
+    }
+  
+    $manage_audit = $zabbix_server::bool_audit_only ? {
+      true  => 'all',
+      false => undef,
+    }
+
+    $manage_file_replace = $zabbix_server::bool_audit_only ? {
+      true  => false,
+      false => true,
+    }
+
+    $manage_file_source = $zabbix_server::source ? {
+      ''        => undef,
+      default   => $zabbix_server::source,
+    }
+
+    $manage_file_content = $zabbix_server::template ? {
+      ''        => undef,
+      default   => template($zabbix_server::template),
+    }
+
+    ### Managed resources
+    package { $zabbix_server::package:
+      ensure  => $zabbix_server::manage_package,
+      noop    => $zabbix_server::bool_noops,
+    }
+
+    service { 'zabbix_server':
+      ensure     => $zabbix_server::manage_service_ensure,
+      name       => $zabbix_server::service,
+      enable     => $zabbix_server::manage_service_enable,
+      hasstatus  => $zabbix_server::service_status,
+      pattern    => $zabbix_server::process,
+      require    => Package[$zabbix_server::package],
+      noop       => $zabbix_server::bool_noops,
+    }
+
+    file { 'zabbix_server.conf':
+      ensure  => $zabbix_server::manage_file,
+      path    => $zabbix_server::config_file,
+      mode    => $zabbix_server::config_file_mode,
+      owner   => $zabbix_server::config_file_owner,
+      group   => $zabbix_server::config_file_group,
       require => Package[$zabbix_server::package],
       notify  => $zabbix_server::manage_service_autorestart,
-      source  => $zabbix_server::source_dir,
-      recurse => true,
-      purge   => $zabbix_server::bool_source_dir_purge,
-      force   => $zabbix_server::bool_source_dir_purge,
+      source  => $zabbix_server::manage_file_source,
+      content => $zabbix_server::manage_file_content,
       replace => $zabbix_server::manage_file_replace,
       audit   => $zabbix_server::manage_audit,
       noop    => $zabbix_server::bool_noops,
     }
-  }
 
-
-  ### Include custom class if $my_class is set
-  if $zabbix_server::my_class {
-    include $zabbix_server::my_class
-  }
-
-
-  ### Provide puppi data, if enabled ( puppi => true )
-  if $zabbix_server::bool_puppi == true {
-    $classvars=get_class_args()
-    puppi::ze { 'zabbix_server':
-      ensure    => $zabbix_server::manage_file,
-      variables => $classvars,
-      helper    => $zabbix_server::puppi_helper,
-      noop      => $zabbix_server::bool_noops,
-    }
-  }
-
-
-  ### Service monitoring, if enabled ( monitor => true )
-  if $zabbix_server::bool_monitor == true {
-    if $zabbix_server::port != '' {
-      monitor::port { "zabbix_server_${zabbix_server::protocol}_${zabbix_server::port}":
-        protocol => $zabbix_server::protocol,
-        port     => $zabbix_server::port,
-        target   => $zabbix_server::monitor_target,
-        tool     => $zabbix_server::monitor_tool,
-        enable   => $zabbix_server::manage_monitor,
-        noop     => $zabbix_server::bool_noops,
+    # The whole zabbix_server configuration directory can be recursively overriden
+    if $zabbix_server::source_dir {
+      file { 'zabbix_server.dir':
+        ensure  => directory,
+        path    => $zabbix_server::config_dir,
+        require => Package[$zabbix_server::package],
+        notify  => $zabbix_server::manage_service_autorestart,
+        source  => $zabbix_server::source_dir,
+        recurse => true,
+        purge   => $zabbix_server::bool_source_dir_purge,
+        force   => $zabbix_server::bool_source_dir_purge,
+        replace => $zabbix_server::manage_file_replace,
+        audit   => $zabbix_server::manage_audit,
+        noop    => $zabbix_server::bool_noops,
       }
     }
-    if $zabbix_server::service != '' {
-      monitor::process { 'zabbix_server_process':
-        process  => $zabbix_server::process,
-        service  => $zabbix_server::service,
-        pidfile  => $zabbix_server::pid_file,
-        user     => $zabbix_server::process_user,
-        argument => $zabbix_server::process_args,
-        tool     => $zabbix_server::monitor_tool,
-        enable   => $zabbix_server::manage_monitor,
-        noop     => $zabbix_server::bool_noops,
+
+    ### Include custom class if $my_class is set
+    if $zabbix_server::my_class {
+      include $zabbix_server::my_class
+    }
+
+    ### Provide puppi data, if enabled ( puppi => true )
+    if $zabbix_server::bool_puppi == true {
+      $classvars=get_class_args()
+      puppi::ze { 'zabbix_server':
+        ensure    => $zabbix_server::manage_file,
+        variables => $classvars,
+        helper    => $zabbix_server::puppi_helper,
+        noop      => $zabbix_server::bool_noops,
       }
     }
-  }
 
-
-  ### Firewall management, if enabled ( firewall => true )
-  if $zabbix_server::bool_firewall == true and $zabbix_server::port != '' {
-    firewall { "zabbix_server_${zabbix_server::protocol}_${zabbix_server::port}":
-      source      => $zabbix_server::firewall_src,
-      destination => $zabbix_server::firewall_dst,
-      protocol    => $zabbix_server::protocol,
-      port        => $zabbix_server::port,
-      action      => 'allow',
-      direction   => 'input',
-      tool        => $zabbix_server::firewall_tool,
-      noop        => $zabbix_server::bool_noops,
+    ### Service monitoring, if enabled ( monitor => true )
+    if $zabbix_server::bool_monitor == true {
+      if $zabbix_server::port != '' {
+        monitor::port { "zabbix_server_${zabbix_server::protocol}_${zabbix_server::port}":
+          protocol => $zabbix_server::protocol,
+          port     => $zabbix_server::port,
+          target   => $zabbix_server::monitor_target,
+          tool     => $zabbix_server::monitor_tool,
+          enable   => $zabbix_server::manage_monitor,
+          noop     => $zabbix_server::bool_noops,
+        }
+      }
+      if $zabbix_server::service != '' {
+        monitor::process { 'zabbix_server_process':
+          process  => $zabbix_server::process,
+          service  => $zabbix_server::service,
+          pidfile  => $zabbix_server::pid_file,
+          user     => $zabbix_server::process_user,
+          argument => $zabbix_server::process_args,
+          tool     => $zabbix_server::monitor_tool,
+          enable   => $zabbix_server::manage_monitor,
+          noop     => $zabbix_server::bool_noops,
+        }
+      }
     }
-  }
 
-
-  ### Debugging, if enabled ( debug => true )
-  if $zabbix_server::bool_debug == true {
-    file { 'debug_zabbix_server':
-      ensure  => $zabbix_server::manage_file,
-      path    => "${settings::vardir}/debug-zabbix_server",
-      mode    => '0640',
-      owner   => 'root',
-      group   => 'root',
-      content => inline_template('<%= scope.to_hash.reject { |k,v| k.to_s =~ /(uptime.*|path|timestamp|free|.*password.*|.*psk.*|.*key)/ }.to_yaml %>'),
-      noop    => $zabbix_server::bool_noops,
+    ### Firewall management, if enabled ( firewall => true )
+    if $zabbix_server::bool_firewall == true and $zabbix_server::port != '' {
+      firewall { "zabbix_server_${zabbix_server::protocol}_${zabbix_server::port}":
+        source      => $zabbix_server::firewall_src,
+        destination => $zabbix_server::firewall_dst,
+        protocol    => $zabbix_server::protocol,
+        port        => $zabbix_server::port,
+        action      => 'allow',
+        direction   => 'input',
+        tool        => $zabbix_server::firewall_tool,
+        noop        => $zabbix_server::bool_noops,
+      }
     }
+
+    ### Debugging, if enabled ( debug => true )
+    if $zabbix_server::bool_debug == true {
+      file { 'debug_zabbix_server':
+        ensure  => $zabbix_server::manage_file,
+        path    => "${settings::vardir}/debug-zabbix_server",
+        mode    => '0640',
+        owner   => 'root',
+        group   => 'root',
+        content => inline_template('<%= scope.to_hash.reject { |k,v| k.to_s =~ /(uptime.*|path|timestamp|free|.*password.*|.*psk.*|.*key)/ }.to_yaml %>'),
+        noop    => $zabbix_server::bool_noops,
+      }
+    }
+  
   }
 
 }
