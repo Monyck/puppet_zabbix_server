@@ -15,10 +15,10 @@ For detailed info about the logic and usage patterns of Example42 modules check 
 Official site: http://www.example42.com
 
 ## USAGE - Notice
----
+
 **Zabbix is made of several separate parts and can be installed on different hosts. Therefore, this module allows you to install the different parts separately. 
 You are strongly advised to read the code to enable or disable the installation of the different parts.**
----
+
 
 ## USAGE - Basic management
 
