@@ -1,5 +1,5 @@
 class zabbix_server::frontend (
-  vhost_template = $::zabbix_server::frontend_template ) {
+  $vhost_template = $::zabbix_server::frontend_template ) {
 
   $packages = [ 'zabbix-web', "zabbix-web-${::zabbix_server::db_type}" ]
   
